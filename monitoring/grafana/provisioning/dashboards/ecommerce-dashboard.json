@@ -1,0 +1,81 @@
+{
+  "dashboard": {
+    "title": "E-commerce API Monitoring",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[1m])",
+            "legendFormat": "{{method}} {{endpoint}}"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}
+      },
+      {
+        "id": 2,
+        "title": "Error Rate (5xx)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_errors_5xx[1m])",
+            "legendFormat": "{{endpoint}}"
+          }
+        ],
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8}
+      },
+      {
+        "id": 3,
+        "title": "Request Duration (95th percentile)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{method}} {{endpoint}}"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8}
+      },
+      {
+        "id": 4,
+        "title": "Database Connection Pool Usage",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "db_connection_pool_usage"
+          }
+        ],
+        "gridPos": {"x": 12, "y": 8, "w": 6, "h": 8}
+      },
+      {
+        "id": 5,
+        "title": "Memory Leak Objects",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "memory_leak_objects"
+          }
+        ],
+        "gridPos": {"x": 18, "y": 8, "w": 6, "h": 8}
+      },
+      {
+        "id": 6,
+        "title": "Inventory Race Conditions",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(inventory_race_conditions[1m])"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8}
+      }
+    ],
+    "refresh": "5s",
+    "time": {
+      "from": "now-15m",
+      "to": "now"
+    }
+  }
+}
