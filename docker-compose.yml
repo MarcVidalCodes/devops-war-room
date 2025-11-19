@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  ecommerce-api:
+    build: .
+    container_name: ecommerce-api
+    ports:
+      - "5001:5000"
+    environment:
+      - FLASK_ENV=production
+      - LOG_LEVEL=INFO
+      - DB_POOL_SIZE=5
+      - DB_MAX_OVERFLOW=5
+      - ENABLE_BUGS=true
+      - ERROR_RATE_PERCENT=5
+      - SLOW_QUERY_DELAY=2
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
+
+volumes:
+  prometheus_data:
+  grafana_data:
