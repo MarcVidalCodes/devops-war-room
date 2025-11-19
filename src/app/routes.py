@@ -120,7 +120,7 @@ def create_order():
 
         conn = db_pool.acquire()
         try:
-            result = conn.execute(f"SELECT * FROM ORDERS WHERE user_id='{user_id}'")
+            conn.execute(f"SELECT * FROM ORDERS WHERE user_id='{user_id}'")
 
             order = {
                 "order_id": len(orders_db) + 1,
@@ -156,7 +156,7 @@ def checkout():
 
         conn = db_pool.acquire()
         try:
-            result = conn.execute(f"SELECT * FROM CHECKOUT WHERE user_id='{user_id}'")
+            conn.execute(f"SELECT * FROM CHECKOUT WHERE user_id='{user_id}'")
 
             return jsonify({"status": "success", "message": "Checkout completed"}), 200
         finally:

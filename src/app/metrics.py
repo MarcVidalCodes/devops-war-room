@@ -1,6 +1,5 @@
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, REGISTRY
 from flask import Response
-import time
 
 http_requests_total = Counter(
     "http_requests_total", "Total HTTP requests", ["method", "endpoint", "status"]

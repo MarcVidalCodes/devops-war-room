@@ -1,5 +1,4 @@
 import time
-import random
 from threading import Lock
 from src.app.config import Config
 from src.app.metrics import db_connection_pool_usage
