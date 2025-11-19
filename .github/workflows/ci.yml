@@ -56,21 +56,21 @@ jobs:
       - uses: actions/checkout@v3
       
       - name: Start services
-        run: docker-compose up -d
+        run: docker compose up -d
       
       - name: Wait for services
         run: |
           sleep 15
-          curl -f http://localhost:5000/api/v1/health || exit 1
+          curl -f http://localhost:5001/api/v1/health || exit 1
           curl -f http://localhost:9090/-/healthy || exit 1
       
       - name: Test API endpoints
         run: |
-          curl -f http://localhost:5000/api/v1/products
-          curl -f http://localhost:5000/api/v1/inventory
+          curl -f http://localhost:5001/api/v1/products
+          curl -f http://localhost:5001/api/v1/inventory
       
       - name: Test metrics endpoint
-        run: curl -f http://localhost:5000/metrics
+        run: curl -f http://localhost:5001/metrics
       
       - name: Check Prometheus targets
         run: |
@@ -78,4 +78,4 @@ jobs:
           curl -s http://localhost:9090/api/v1/targets | grep -q "ecommerce-api"
       
       - name: Cleanup
-        run: docker-compose down -v
+        run: docker compose down -v
