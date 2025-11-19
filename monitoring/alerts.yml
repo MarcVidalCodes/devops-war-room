@@ -3,7 +3,7 @@ groups:
     interval: 30s
     rules:
       - alert: HighErrorRate
-        expr: rate(http_errors_5xx[1m]) > 0.05
+        expr: rate(http_errors_5xx_total[1m]) > 0.05
         for: 1m
         labels:
           severity: critical
@@ -39,7 +39,7 @@ groups:
           description: "Leaked objects count is {{ $value }}"
 
       - alert: InventoryRaceCondition
-        expr: rate(inventory_race_conditions[5m]) > 0.1
+        expr: rate(inventory_race_conditions_total[5m]) > 0.1
         for: 1m
         labels:
           severity: warning

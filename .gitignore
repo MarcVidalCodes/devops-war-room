@@ -42,3 +42,5 @@ htmlcov/
 
 prometheus_data/
 grafana_data/
+
+LEARNING-GUIDE.md
