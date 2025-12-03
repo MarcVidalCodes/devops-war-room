@@ -73,7 +73,9 @@ class MonitorAgent:
         # Verify Prometheus is reachable before starting loop
         if not self.client.is_healthy():
             self.logger.error("Prometheus is not reachable. Exiting.")
-            self.logger.error("Make sure Docker containers are running: docker compose up -d")
+            self.logger.error(
+                "Make sure Docker containers are running: docker compose up -d"
+            )
             return
 
         self.logger.info("Prometheus is healthy. Starting monitoring loop...")
@@ -137,9 +139,7 @@ class MonitorAgent:
 
             # Log status every check (heartbeat)
             if not new_alerts and not resolved_alerts:
-                self.logger.info(
-                    f"Status check: {len(current_firing)} alerts firing"
-                )
+                self.logger.info(f"Status check: {len(current_firing)} alerts firing")
 
         except Exception as e:
             self.logger.error(f"Error checking alerts: {str(e)}")
