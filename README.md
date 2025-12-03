@@ -1,97 +1,66 @@
-# Agentic DevOps War Room
+# DevOps War Room: AI-Powered Incident Response
 
-An autonomous AI agent system that monitors a live e-commerce application and attempts to diagnose and fix issues with human approval.
+A simulated production environment with intentional bugs, monitored by an observability stack, and managed by autonomous AI agents that detect, triage, and diagnose incidents in real-time.
 
-## Phase 1: Buggy E-commerce API with Monitoring
+## 🚀 What It Does
 
-### Architecture
+1.  **Simulates a Broken App**: A Flask e-commerce API (`src/app`) with intentional bugs (memory leaks, database pool exhaustion, race conditions).
+2.  **Monitors Everything**: Prometheus scrapes metrics; Grafana visualizes them.
+3.  **Automated Response**:
+    *   **Monitor Agent**: Detects firing alerts.
+    *   **Triage Agent**: Investigates alerts by running specific PromQL queries to gather context.
+    *   **Diagnostic Agent**: Uses Google Gemini (AI) to analyze the data, determine root causes, and recommend fixes.
 
-- **E-commerce API**: Flask REST API with intentional bugs
-- **Prometheus**: Metrics collection and alerting
-- **Grafana**: Monitoring dashboard
-- **Docker**: Containerization
+## 🛠️ Architecture
 
-### Intentional Bugs
+*   **Application**: Python Flask (running in Docker).
+*   **Infrastructure**: Docker Compose.
+*   **Observability**: Prometheus (Metrics & Alerting), Grafana (Dashboards).
+*   **AI/Automation**: Python Agents using LangChain & Google Gemini.
 
-1. **Random 5xx Errors**: 5% of product requests fail randomly
-2. **Memory Leak**: Cart sessions are never released
-3. **Slow Queries**: Order queries have 2-second delays
-4. **Connection Pool Exhaustion**: Checkout doesn't release DB connections
-5. **Race Conditions**: Inventory updates have timing issues
+## ⚡ Quick Start
 
-### Quick Start
+### 1. Prerequisites
+*   Docker & Docker Compose
+*   Python 3.11+
+*   Google Gemini API Key (Free)
 
-1. Clone and setup:
+### 2. Setup
 ```bash
-git clone <repo-url>
-cd devops-war-room
-cp .env.example .env
-```
-
-2. Start services:
-```bash
-docker-compose up -d
-```
-
-3. Access services:
-- API: http://localhost:5000
-- Prometheus: http://localhost:9090
-- Grafana: http://localhost:3000 (admin/admin)
-
-4. Run load test:
-```bash
-chmod +x scripts/load_test.sh
-./scripts/load_test.sh
-```
-
-### API Endpoints
-
-- `GET /health` - Health check
-- `GET /api/v1/products` - List products
-- `GET /api/v1/products/<id>` - Get product
-- `POST /api/v1/cart/<user_id>` - Add to cart
-- `GET /api/v1/cart/<user_id>` - Get cart
-- `POST /api/v1/orders` - Create order
-- `GET /api/v1/orders/<user_id>` - Get orders
-- `POST /api/v1/checkout` - Checkout
-- `PUT /api/v1/inventory/<id>` - Update inventory
-- `GET /api/v1/inventory` - Get inventory
-- `GET /metrics` - Prometheus metrics
-
-### Prometheus Alerts
-
-- **HighErrorRate**: 5xx errors > 0.05/sec
-- **SlowRequests**: 95th percentile > 2s
-- **DatabasePoolExhaustion**: Pool usage >= 9/10
-- **MemoryLeak**: Leaked objects > 100
-- **InventoryRaceCondition**: Race conditions > 0.1/sec
-
-### Development
-
-Run tests:
-```bash
+# Install dependencies
 pip install -r requirements.txt
-pip install pytest pytest-cov
-pytest tests/
+
+# Set your API Key
+export GOOGLE_API_KEY="your_api_key_here"
 ```
 
-Run locally:
+### 3. Run the Environment
+Start the application and monitoring stack:
 ```bash
-export FLASK_ENV=development
-python -m src.app.main
+docker-compose up --build -d
+```
+*   **API**: http://localhost:5001
+*   **Prometheus**: http://localhost:9090
+*   **Grafana**: http://localhost:3000 (admin/admin)
+
+### 4. Trigger Chaos & Run Agents
+Open two terminal windows:
+
+**Terminal 1: Generate Traffic (Trigger Alerts)**
+```bash
+# Sends traffic to trigger bugs like high error rates and latency
+bash examples/continuous_traffic.sh
 ```
 
-### CI/CD
+**Terminal 2: Run the AI Agent**
+Wait about 30-60 seconds for alerts to fire, then run:
+```bash
+# Detects alerts, gathers metrics, and asks AI for a diagnosis
+python examples/demo_diagnostic_agent.py
+```
 
-GitHub Actions pipeline includes:
-- Linting (Black, Flake8)
-- Unit tests
-- Docker build
-- Integration tests
-
-### Next Steps
-
-Phase 2 will add:
-- MonitorAgent (LangChain)
-- TriageAgent (LangChain)
-- Prometheus integration for agents
+## 📂 Project Structure
+*   `src/app`: The vulnerable Flask application.
+*   `src/agents`: The Python agents (Monitor, Triage, Diagnostic).
+*   `monitoring`: Prometheus and Grafana configuration.
+*   `examples`: Demo scripts to run the agents.
