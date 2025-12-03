@@ -11,8 +11,6 @@ Usage:
 """
 
 from src.integrations.prometheus_client import PrometheusClient
-import json
-
 
 def main():
     print("=" * 60)
