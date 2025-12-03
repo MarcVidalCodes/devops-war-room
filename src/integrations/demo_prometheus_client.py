@@ -76,9 +76,7 @@ def main():
             method = metric.get("method", "unknown")
             status = metric.get("status", "unknown")
             value = series.get("value", [None, "0"])[1]
-            print(
-                f"   [{i+1}] {endpoint} {method} {status} = {value} total requests"
-            )
+            print(f"   [{i+1}] {endpoint} {method} {status} = {value} total requests")
 
     except Exception as e:
         print(f"Error executing query: {e}")
