@@ -2,7 +2,7 @@ import os
 import lancedb
 import pandas as pd
 from typing import List, Dict, Any, Optional
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_ollama import OllamaEmbeddings
 
 
 class IncidentKnowledgeBase:
@@ -28,11 +28,11 @@ class IncidentKnowledgeBase:
         # Connect to LanceDB
         self.db = lancedb.connect(db_path)
         
-        # Initialize Embeddings Model (Google Gemini)
+        # Initialize Embeddings Model (Ollama)
         # This converts text into numbers (vectors)
-        self.embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/embedding-001",
-            google_api_key=os.getenv("GOOGLE_API_KEY")
+        # Requires: ollama pull nomic-embed-text
+        self.embeddings = OllamaEmbeddings(
+            model="nomic-embed-text"
         )
         
         # Create or open the table

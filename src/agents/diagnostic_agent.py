@@ -10,7 +10,7 @@ This is where AI enters the system - everything before this was traditional auto
 import logging
 import os
 from typing import Dict, Any, Optional
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_ollama import ChatOllama
 from langchain_core.prompts import PromptTemplate
 from src.agents.knowledge_base import IncidentKnowledgeBase
 
@@ -31,26 +31,24 @@ class DiagnosticAgent:
 
     def __init__(
         self,
-        model: str = "models/gemini-2.5-flash",
+        model: str = "llama3",
         temperature: float = 0.1,
-        api_key: Optional[str] = None,
     ):
         """
         Initialize the DiagnosticAgent.
 
         Args:
-            model: Google Gemini model to use (models/gemini-2.5-flash, models/gemini-2.5-pro, etc.)
+            model: Ollama model to use (llama3, mistral, etc.)
             temperature: LLM temperature (0.0 = deterministic, 1.0 = creative)
                         Use low temperature for diagnostic work
-            api_key: Google API key (if not set, reads from GOOGLE_API_KEY env var)
         """
         self.logger = logging.getLogger(__name__)
 
-        # Initialize LLM (Gemini)
-        self.llm = ChatGoogleGenerativeAI(
+        # Initialize LLM (Ollama)
+        # Requires: ollama pull llama3
+        self.llm = ChatOllama(
             model=model,
             temperature=temperature,
-            google_api_key=api_key or os.getenv("GOOGLE_API_KEY"),
         )
 
         # Initialize Knowledge Base (RAG)

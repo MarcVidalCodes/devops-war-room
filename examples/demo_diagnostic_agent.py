@@ -2,15 +2,17 @@
 Demo script for DiagnosticAgent (AI-powered).
 
 This demonstrates the first AI component in the system.
-DiagnosticAgent uses Google Gemini to analyze alerts and provide root cause analysis.
+DiagnosticAgent uses Ollama (local LLM) to analyze alerts and provide root cause analysis.
 
 Prerequisites:
-1. Set GOOGLE_API_KEY environment variable
-2. Have alerts firing (run continuous_traffic.sh)
+1. Install Ollama (https://ollama.com)
+2. Pull models: `ollama pull llama3` and `ollama pull nomic-embed-text`
+3. Have alerts firing (run continuous_traffic.sh)
 """
 
 import os
 import logging
+import requests
 from src.agents.diagnostic_agent import DiagnosticAgent
 from src.agents.triage_agent import TriageAgent
 from src.integrations.prometheus_client import PrometheusClient
@@ -25,40 +27,52 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def check_ollama():
+    """Check if Ollama is running and models are available."""
+    try:
+        response = requests.get("http://localhost:11434/api/tags")
+        if response.status_code == 200:
+            models = [m['name'] for m in response.json().get('models', [])]
+            print(f"✓ Ollama is running (Found models: {', '.join(models)})")
+            
+            required_models = ['llama3', 'nomic-embed-text']
+            missing = [m for m in required_models if not any(m in installed for installed in models)]
+            
+            if missing:
+                print(f"⚠️  Missing models: {', '.join(missing)}")
+                print(f"   Run: ollama pull {' '.join(missing)}")
+                return False
+            return True
+    except:
+        print("❌ ERROR: Ollama is not running!")
+        print("   Please start Ollama app or run 'ollama serve'")
+        return False
+    return False
+
+
 def main():
     print("\n" + "=" * 70)
     print("🤖 DiagnosticAgent Demo - AI-Powered Root Cause Analysis")
     print("=" * 70)
     print()
-    print("This agent uses Google Gemini to analyze production incidents.")
+    print("This agent uses Ollama (Local AI) to analyze production incidents.")
     print()
     print("Prerequisites:")
-    print("  1. Set GOOGLE_API_KEY environment variable")
-    print("  2. Have alerts firing (bash examples/continuous_traffic.sh)")
+    print("  1. Install Ollama")
+    print("  2. Run: ollama pull llama3")
+    print("  3. Run: ollama pull nomic-embed-text")
     print()
     print("=" * 70)
     print()
     
-    # Check for API key
-    if not os.getenv("GOOGLE_API_KEY"):
-        print("❌ ERROR: GOOGLE_API_KEY environment variable not set!")
-        print()
-        print("To get a FREE API key:")
-        print("  1. Go to: https://aistudio.google.com/app/apikey")
-        print("  2. Click 'Get API key' (sign in with Google account)")
-        print("  3. Click 'Create API key'")
-        print()
-        print("To set it:")
-        print('  export GOOGLE_API_KEY="your-api-key-here"')
-        print()
-        print("Or create a .env file:")
-        print('  echo "GOOGLE_API_KEY=your-api-key-here" > .env')
+    # Check for Ollama
+    if not check_ollama():
         return
     
     # Initialize agents
     prometheus_client = PrometheusClient("http://localhost:9090")
     triage_agent = TriageAgent("http://localhost:9090")
-    diagnostic_agent = DiagnosticAgent(model="models/gemini-2.5-flash", temperature=0.1)
+    diagnostic_agent = DiagnosticAgent(model="llama3", temperature=0.1)
     
     # Check Prometheus health
     if not prometheus_client.is_healthy():
@@ -80,12 +94,8 @@ def main():
     print("\n" + "=" * 70)
     print()
     
-    # Limit to first 2 alerts for demo (to save API costs)
+    # Limit to first 2 alerts for demo
     alerts_to_analyze = alerts[:2]
-    
-    if len(alerts) > 2:
-        print(f"Note: Analyzing first 2 of {len(alerts)} alerts to save API costs")
-        print()
     
     # Process each alert
     for i, alert in enumerate(alerts_to_analyze, 1):
@@ -103,7 +113,7 @@ def main():
         print()
         
         # Step 2: AI Diagnosis
-        print("🤖 Step 2: AI Diagnosis (calling Gemini)...")
+        print("🤖 Step 2: AI Diagnosis (calling Ollama)...")
         diagnosis = diagnostic_agent.diagnose(
             alert_info=triage_report["alert_info"],
             triage_report=triage_report
