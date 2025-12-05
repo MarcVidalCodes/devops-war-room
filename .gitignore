@@ -44,3 +44,6 @@ prometheus_data/
 grafana_data/
 
 LEARNING-GUIDE.md
+
+# Vector DB data
+data/

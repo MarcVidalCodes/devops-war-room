@@ -149,7 +149,8 @@ def main():
         print()
         
         # Show raw LLM response (optional)
-        show_raw = input("Show full LLM response? (y/n): ").strip().lower()
+        # show_raw = input("Show full LLM response? (y/n): ").strip().lower()
+        show_raw = 'n'
         if show_raw == 'y':
             print()
             print("=" * 70)
