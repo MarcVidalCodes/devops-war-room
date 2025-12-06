@@ -31,10 +31,8 @@ class IncidentKnowledgeBase:
         # Initialize Embeddings Model (Ollama)
         # This converts text into numbers (vectors)
         # Requires: ollama pull nomic-embed-text
-        self.embeddings = OllamaEmbeddings(
-            model="nomic-embed-text"
-        )
-        
+        self.embeddings = OllamaEmbeddings(model="nomic-embed-text")
+
         # Create or open the table
         self.table_name = "incidents"
         self._init_table()
@@ -50,7 +48,7 @@ class IncidentKnowledgeBase:
                 "diagnosis": "init",
                 "root_cause": "init",
                 "fix": "init",
-                "timestamp": "init"
+                "timestamp": "init",
             }
             # We don't strictly need to create it here if we use 'create_table' later
             # but it's good practice to check connection.
@@ -72,41 +70,50 @@ class IncidentKnowledgeBase:
         vector = self.embeddings.embed_query(text_to_embed)
         
         # 2. Store in LanceDB
-        data = [{
-            "vector": vector,
-            "alert_name": alert_name,
-            "diagnosis": diagnosis,
-            "root_cause": root_cause,
-            "fix": fix,
-            "timestamp": pd.Timestamp.now().isoformat()
-        }]
-        
+        data = [
+            {
+                "vector": vector,
+                "alert_name": alert_name,
+                "diagnosis": diagnosis,
+                "root_cause": root_cause,
+                "fix": fix,
+                "timestamp": pd.Timestamp.now().isoformat(),
+            }
+        ]
+
         if self.table_name in self.db.table_names():
             self.db.open_table(self.table_name).add(data)
         else:
             self.db.create_table(self.table_name, data)
 
-    def search_similar(self, alert_name: str, current_symptoms: str, limit: int = 3) -> List[Dict[str, Any]]:
+    def search_similar(
+        self, alert_name: str, current_symptoms: str, limit: int = 3
+    ) -> List[Dict[str, Any]]:
         """
         Find similar past incidents.
-        
+
         Args:
             alert_name: The current alert
             current_symptoms: Description of what's happening now
             limit: How many results to return
-            
+
         Returns:
             List of similar past incidents
         """
         if self.table_name not in self.db.table_names():
             return []
-            
+
         # 1. Vectorize the current situation
         query_text = f"{alert_name}: {current_symptoms}"
         query_vector = self.embeddings.embed_query(query_text)
-        
+
         # 2. Search the database
-        results = self.db.open_table(self.table_name).search(query_vector).limit(limit).to_pandas()
-        
+        results = (
+            self.db.open_table(self.table_name)
+            .search(query_vector)
+            .limit(limit)
+            .to_pandas()
+        )
+
         # 3. Convert to list of dicts
         return results.to_dict(orient="records")

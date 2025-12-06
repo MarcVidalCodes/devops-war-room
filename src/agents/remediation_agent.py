@@ -9,11 +9,16 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 class RemediationPlan(BaseModel):
-    action_type: str = Field(description="Type of action: 'code_change', 'terminal_command', or 'manual_step'")
+    action_type: str = Field(
+        description="Type of action: 'code_change', 'terminal_command', or 'manual_step'"
+    )
     description: str = Field(description="Short description of what this fix does")
     content: str = Field(description="The actual code snippet, command, or instruction")
-    file_path: str = Field(description="Path to the file to modify (if applicable)", default="")
+    file_path: str = Field(
+        description="Path to the file to modify (if applicable)", default=""
+    )
     risk_level: str = Field(description="Risk level: 'low', 'medium', 'high'")
+
 
 class RemediationAgent:
     def __init__(self, model: str = "llama3", temperature: float = 0.1):
@@ -24,8 +29,11 @@ class RemediationAgent:
         self.parser = JsonOutputParser(pydantic_object=RemediationPlan)
         
         # Define the prompt
-        self.prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are an expert Site Reliability Engineer and Python Developer. 
+        self.prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    """You are an expert Site Reliability Engineer and Python Developer. 
             Your goal is to fix production incidents based on a diagnosis.
             
             You must output your response in valid JSON format matching the requested schema.
@@ -45,8 +53,11 @@ class RemediationAgent:
             
             For 'manual_step':
             - Provide clear instructions.
-            """),
-            ("human", """
+            """,
+                ),
+                (
+                    "human",
+                    """
             Here is the incident context:
             
             ALERT: {alert_name}
@@ -58,8 +69,10 @@ class RemediationAgent:
             
             Generate a remediation plan.
             {format_instructions}
-            """)
-        ])
+            """,
+                ),
+            ]
+        )
         
         # self.chain = self.prompt | self.llm | self.parser
         # Split chain to debug raw output
@@ -69,26 +82,32 @@ class RemediationAgent:
         """
         Generates a remediation plan based on the diagnosis.
         """
-        self.logger.info(f"Generating remediation plan for: {diagnosis_result.get('diagnosis', 'Unknown issue')}")
-        
+        self.logger.info(
+            f"Generating remediation plan for: {diagnosis_result.get('diagnosis', 'Unknown issue')}"
+        )
+
         try:
             # Extract relevant info
-            alert_name = diagnosis_result.get("alert_info", {}).get("alertname", "Unknown")
+            alert_name = diagnosis_result.get("alert_info", {}).get(
+                "alertname", "Unknown"
+            )
             diagnosis = diagnosis_result.get("diagnosis", "")
             # Sometimes diagnosis result structure varies, let's be robust
-            root_cause = diagnosis_result.get("root_cause", diagnosis) 
-            
+            root_cause = diagnosis_result.get("root_cause", diagnosis)
+
             # Format triage context for the prompt
             triage_context = str(diagnosis_result.get("triage_report", {}))
-            
-            llm_response = self.chain.invoke({
-                "alert_name": alert_name,
-                "diagnosis": diagnosis,
-                "root_cause": root_cause,
-                "triage_context": triage_context,
-                "format_instructions": self.parser.get_format_instructions()
-            })
-            
+
+            llm_response = self.chain.invoke(
+                {
+                    "alert_name": alert_name,
+                    "diagnosis": diagnosis,
+                    "root_cause": root_cause,
+                    "triage_context": triage_context,
+                    "format_instructions": self.parser.get_format_instructions(),
+                }
+            )
+
             self.logger.info(f"Raw LLM response: {llm_response.content}")
             
             try:
