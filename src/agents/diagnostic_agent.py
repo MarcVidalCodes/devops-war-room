@@ -136,7 +136,7 @@ Be concise but thorough. Focus on actionable insights.""",
                     similar_incidents = self.knowledge_base.search_similar(
                         alert_name=alert_info.get("name", "Unknown"),
                         current_symptoms=metrics_summary,
-                        limit=3
+                        limit=3,
                     )
                     if similar_incidents:
                         rag_context = "Found similar past incidents:\n"
@@ -177,9 +177,15 @@ Be concise but thorough. Focus on actionable insights.""",
                         alert_name=alert_info.get("name", "Unknown"),
                         diagnosis=parsed.get("root_cause", ""),
                         root_cause=parsed.get("root_cause", ""),
-                        fix=parsed.get("recommendations", ["Check logs"])[0] if parsed.get("recommendations") else "Investigate"
+                        fix=(
+                            parsed.get("recommendations", ["Check logs"])[0]
+                            if parsed.get("recommendations")
+                            else "Investigate"
+                        ),
                     )
-                    self.logger.info("Saved high-confidence diagnosis to Knowledge Base")
+                    self.logger.info(
+                        "Saved high-confidence diagnosis to Knowledge Base"
+                    )
                 except Exception as e:
                     self.logger.warning(f"Failed to save to Knowledge Base: {e}")
 
@@ -191,7 +197,11 @@ Be concise but thorough. Focus on actionable insights.""",
                 "confidence": parsed.get("confidence", "medium"),
                 "raw_response": diagnosis_text,
                 "model_used": self.llm.model,
-                "rag_context_used": bool(similar_incidents) if 'similar_incidents' in locals() else False
+                "rag_context_used": (
+                    bool(similar_incidents)
+                    if "similar_incidents" in locals()
+                    else False
+                ),
             }
 
         except Exception as e:

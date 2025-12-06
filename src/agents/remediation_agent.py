@@ -93,17 +93,23 @@ class RemediationAgent:
             
             try:
                 response = self.parser.parse(llm_response.content)
-                self.logger.info(f"Remediation plan generated successfully. Response keys: {response.keys()}")
+                self.logger.info(
+                    f"Remediation plan generated successfully. Response keys: {response.keys()}"
+                )
                 self.logger.info(f"Full response: {response}")
                 return response
             except Exception as parse_error:
                 self.logger.error(f"Failed to parse JSON: {parse_error}")
                 # Fallback: try to extract JSON from markdown block
                 import re
-                json_match = re.search(r'```json\n(.*?)\n```', llm_response.content, re.DOTALL)
+
+                json_match = re.search(
+                    r"```json\n(.*?)\n```", llm_response.content, re.DOTALL
+                )
                 if json_match:
                     try:
                         import json
+
                         response = json.loads(json_match.group(1))
                         return response
                     except:
@@ -116,5 +122,5 @@ class RemediationAgent:
                 "action_type": "manual_step",
                 "description": "Failed to generate automated fix",
                 "content": "Please investigate manually. AI generation failed.",
-                "risk_level": "high"
+                "risk_level": "high",
             }
