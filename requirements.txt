@@ -7,5 +7,6 @@ requests==2.31.0
 
 # AI/LLM dependencies
 langchain==0.3.7
-langchain-google-genai==2.0.5
-google-generativeai==0.8.3
+langchain-ollama==0.2.0
+lancedb==0.17.0
+pandas==2.2.0

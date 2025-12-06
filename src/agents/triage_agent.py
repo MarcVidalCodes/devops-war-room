@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from datetime import datetime, timedelta
 from src.integrations.prometheus_client import PrometheusClient
 
@@ -78,7 +78,7 @@ class TriageAgent:
                 ),
                 (
                     "race_condition_percentage",
-                    '(rate(inventory_race_conditions_total[5m]) / rate(http_requests_total{endpoint="api.update_inventory"}[5m])) * 100',
+                    '(rate(inventory_race_conditions_total[5m]) / rate(http_requests_total{endpoint="api.update_inventory"}[5m])) * 100',  # noqa: E501
                 ),
             ],
         }

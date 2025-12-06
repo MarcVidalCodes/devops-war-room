@@ -12,6 +12,7 @@ Usage:
 
 from src.integrations.prometheus_client import PrometheusClient
 
+
 def main():
     print("=" * 60)
     print("Prometheus API Client - Demo")

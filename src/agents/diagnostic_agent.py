@@ -8,10 +8,10 @@ This is where AI enters the system - everything before this was traditional auto
 """
 
 import logging
-import os
-from typing import Dict, Any, Optional
-from langchain_google_genai import ChatGoogleGenerativeAI
+from typing import Dict, Any
+from langchain_ollama import ChatOllama
 from langchain_core.prompts import PromptTemplate
+from src.agents.knowledge_base import IncidentKnowledgeBase
 
 
 class DiagnosticAgent:
@@ -30,27 +30,33 @@ class DiagnosticAgent:
 
     def __init__(
         self,
-        model: str = "models/gemini-2.5-flash",
+        model: str = "llama3",
         temperature: float = 0.1,
-        api_key: Optional[str] = None,
     ):
         """
         Initialize the DiagnosticAgent.
 
         Args:
-            model: Google Gemini model to use (models/gemini-2.5-flash, models/gemini-2.5-pro, etc.)
+            model: Ollama model to use (llama3, mistral, etc.)
             temperature: LLM temperature (0.0 = deterministic, 1.0 = creative)
                         Use low temperature for diagnostic work
-            api_key: Google API key (if not set, reads from GOOGLE_API_KEY env var)
         """
         self.logger = logging.getLogger(__name__)
 
-        # Initialize LLM (Gemini)
-        self.llm = ChatGoogleGenerativeAI(
+        # Initialize LLM (Ollama)
+        # Requires: ollama pull llama3
+        self.llm = ChatOllama(
             model=model,
             temperature=temperature,
-            google_api_key=api_key or os.getenv("GOOGLE_API_KEY"),
         )
+
+        # Initialize Knowledge Base (RAG)
+        try:
+            self.knowledge_base = IncidentKnowledgeBase()
+            self.logger.info("Incident Knowledge Base initialized successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize Knowledge Base: {e}")
+            self.knowledge_base = None
 
         # Diagnostic prompt template
         self.diagnostic_prompt = PromptTemplate(
@@ -66,12 +72,16 @@ ALERT INFORMATION:
 CURRENT METRICS:
 {metrics_summary}
 
+SIMILAR PAST INCIDENTS (RAG Context):
+{rag_context}
+
 YOUR TASK:
 Analyze this incident and provide:
 
 1. ROOT CAUSE HYPOTHESIS
    - What is the most likely cause of this alert?
    - Be specific and technical
+   - If similar past incidents are relevant, reference them
 
 2. SUPPORTING EVIDENCE
    - What metrics/data support this hypothesis?
@@ -93,6 +103,7 @@ Be concise but thorough. Focus on actionable insights.""",
                 "description",
                 "started_at",
                 "metrics_summary",
+                "rag_context",
             ],
         )
 
@@ -117,6 +128,26 @@ Be concise but thorough. Focus on actionable insights.""",
             # Format metrics for LLM consumption
             metrics_summary = self._format_metrics(triage_report.get("metrics", {}))
 
+            # Retrieve similar past incidents (RAG)
+            rag_context = "No similar past incidents found."
+            if self.knowledge_base:
+                try:
+                    similar_incidents = self.knowledge_base.search_similar(
+                        alert_name=alert_info.get("name", "Unknown"),
+                        current_symptoms=metrics_summary,
+                        limit=3,
+                    )
+                    if similar_incidents:
+                        rag_context = "Found similar past incidents:\n"
+                        for i, incident in enumerate(similar_incidents, 1):
+                            rag_context += (
+                                f"{i}. Alert: {incident['alert_name']}\n"
+                                f"   Root Cause: {incident['root_cause']}\n"
+                                f"   Fix: {incident['fix']}\n"
+                            )
+                except Exception as e:
+                    self.logger.warning(f"RAG search failed: {e}")
+
             # Create prompt
             prompt_text = self.diagnostic_prompt.format(
                 alert_name=alert_info.get("name", "Unknown"),
@@ -125,6 +156,7 @@ Be concise but thorough. Focus on actionable insights.""",
                 description=alert_info.get("description", "No description available"),
                 started_at=alert_info.get("started_at", "Unknown"),
                 metrics_summary=metrics_summary,
+                rag_context=rag_context,
             )
 
             self.logger.info(f"Diagnosing alert: {alert_info.get('name', 'Unknown')}")
@@ -136,6 +168,26 @@ Be concise but thorough. Focus on actionable insights.""",
             # Parse response
             parsed = self._parse_diagnosis(diagnosis_text)
 
+            # Learn from this incident (Save to Memory)
+            # Only save if we have a confident diagnosis
+            if self.knowledge_base and parsed.get("confidence") == "high":
+                try:
+                    self.knowledge_base.add_incident(
+                        alert_name=alert_info.get("name", "Unknown"),
+                        diagnosis=parsed.get("root_cause", ""),
+                        root_cause=parsed.get("root_cause", ""),
+                        fix=(
+                            parsed.get("recommendations", ["Check logs"])[0]
+                            if parsed.get("recommendations")
+                            else "Investigate"
+                        ),
+                    )
+                    self.logger.info(
+                        "Saved high-confidence diagnosis to Knowledge Base"
+                    )
+                except Exception as e:
+                    self.logger.warning(f"Failed to save to Knowledge Base: {e}")
+
             return {
                 "alert_name": alert_info.get("name", "Unknown"),
                 "diagnosis": parsed.get("root_cause", "Unable to determine"),
@@ -144,6 +196,11 @@ Be concise but thorough. Focus on actionable insights.""",
                 "confidence": parsed.get("confidence", "medium"),
                 "raw_response": diagnosis_text,
                 "model_used": self.llm.model,
+                "rag_context_used": (
+                    bool(similar_incidents)
+                    if "similar_incidents" in locals()
+                    else False
+                ),
             }
 
         except Exception as e:

@@ -3,7 +3,6 @@ from src.app.routes import api
 from src.app.metrics import metrics_endpoint
 from src.app.config import Config
 from src.app.logging_config import setup_logging
-import logging
 
 
 def create_app():
