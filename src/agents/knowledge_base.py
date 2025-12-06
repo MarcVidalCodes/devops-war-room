@@ -8,26 +8,26 @@ from langchain_ollama import OllamaEmbeddings
 class IncidentKnowledgeBase:
     """
     The 'Long-Term Memory' for the DevOps Agents.
-    
+
     Uses LanceDB (Vector Database) to store and retrieve past incidents.
     This allows the AI to learn from experience (RAG - Retrieval Augmented Generation).
     """
-    
+
     def __init__(self, db_path: str = "data/lancedb"):
         """
         Initialize the Knowledge Base.
-        
+
         Args:
             db_path: Local path to store the vector database
         """
         self.db_path = db_path
-        
+
         # Ensure directory exists
         os.makedirs(db_path, exist_ok=True)
-        
+
         # Connect to LanceDB
         self.db = lancedb.connect(db_path)
-        
+
         # Initialize Embeddings Model (Ollama)
         # This converts text into numbers (vectors)
         # Requires: ollama pull nomic-embed-text
@@ -68,7 +68,7 @@ class IncidentKnowledgeBase:
         # We want to find similar root causes in the future
         text_to_embed = f"{alert_name}: {root_cause}"
         vector = self.embeddings.embed_query(text_to_embed)
-        
+
         # 2. Store in LanceDB
         data = [
             {

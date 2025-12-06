@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 # Configure logging
 logger = logging.getLogger(__name__)
 
+
 class RemediationPlan(BaseModel):
     action_type: str = Field(
         description="Type of action: 'code_change', 'terminal_command', or 'manual_step'"
@@ -24,10 +25,10 @@ class RemediationAgent:
     def __init__(self, model: str = "llama3", temperature: float = 0.1):
         self.llm = ChatOllama(model=model, temperature=temperature)
         self.logger = logger
-        
+
         # Define the parser
         self.parser = JsonOutputParser(pydantic_object=RemediationPlan)
-        
+
         # Define the prompt
         self.prompt = ChatPromptTemplate.from_messages(
             [
@@ -73,7 +74,7 @@ class RemediationAgent:
                 ),
             ]
         )
-        
+
         # self.chain = self.prompt | self.llm | self.parser
         # Split chain to debug raw output
         self.chain = self.prompt | self.llm
@@ -109,7 +110,7 @@ class RemediationAgent:
             )
 
             self.logger.info(f"Raw LLM response: {llm_response.content}")
-            
+
             try:
                 response = self.parser.parse(llm_response.content)
                 self.logger.info(
@@ -134,7 +135,7 @@ class RemediationAgent:
                     except:
                         pass
                 raise parse_error
-            
+
         except Exception as e:
             self.logger.error(f"Failed to generate remediation plan: {e}")
             return {
