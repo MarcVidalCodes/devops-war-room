@@ -43,7 +43,7 @@ class RemediationAgent:
             IMPORTANT GUIDELINES:
             1. Return ONLY a SINGLE JSON object (not a list, not wrapped in 'actions').
             2. Choose the SINGLE BEST action to resolve the issue immediately.
-            3. Ensure valid JSON syntax: use double quotes for strings, escape newlines with \\n, and DO NOT use triple quotes.
+            3. Ensure valid JSON syntax: use double quotes for strings, escape newlines with \\n, and DO NOT use triple quotes.  # noqa: E501
 
             For 'code_change':
             - Provide the EXACT code snippet to replace or insert.
@@ -60,14 +60,14 @@ class RemediationAgent:
                     "human",
                     """
             Here is the incident context:
-            
+
             ALERT: {alert_name}
             DIAGNOSIS: {diagnosis}
             ROOT CAUSE: {root_cause}
-            
+
             TRIAGE CONTEXT:
             {triage_context}
-            
+
             Generate a remediation plan.
             {format_instructions}
             """,
