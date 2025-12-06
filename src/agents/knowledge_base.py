@@ -1,7 +1,7 @@
 import os
 import lancedb
 import pandas as pd
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from langchain_ollama import OllamaEmbeddings
 
 
@@ -42,14 +42,14 @@ class IncidentKnowledgeBase:
         if self.table_name not in self.db.table_names():
             # Define schema implicitly by creating a dummy empty dataframe
             # LanceDB is flexible, but having a schema helps
-            schema = {
-                "vector": [0.0] * 768,  # Gemini embedding dimension
-                "alert_name": "init",
-                "diagnosis": "init",
-                "root_cause": "init",
-                "fix": "init",
-                "timestamp": "init",
-            }
+            # schema = {
+            #     "vector": [0.0] * 768,  # Gemini embedding dimension
+            #     "alert_name": "init",
+            #     "diagnosis": "init",
+            #     "root_cause": "init",
+            #     "fix": "init",
+            #     "timestamp": "init",
+            # }
             # We don't strictly need to create it here if we use 'create_table' later
             # but it's good practice to check connection.
             pass

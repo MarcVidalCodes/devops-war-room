@@ -8,8 +8,7 @@ This is where AI enters the system - everything before this was traditional auto
 """
 
 import logging
-import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import PromptTemplate
 from src.agents.knowledge_base import IncidentKnowledgeBase

@@ -34,24 +34,24 @@ class RemediationAgent:
             [
                 (
                     "system",
-                    """You are an expert Site Reliability Engineer and Python Developer. 
+                    """You are an expert Site Reliability Engineer and Python Developer.
             Your goal is to fix production incidents based on a diagnosis.
-            
+
             You must output your response in valid JSON format matching the requested schema.
             Do not include any text outside the JSON object.
-            
+
             IMPORTANT GUIDELINES:
             1. Return ONLY a SINGLE JSON object (not a list, not wrapped in 'actions').
             2. Choose the SINGLE BEST action to resolve the issue immediately.
             3. Ensure valid JSON syntax: use double quotes for strings, escape newlines with \\n, and DO NOT use triple quotes.
-            
+
             For 'code_change':
             - Provide the EXACT code snippet to replace or insert.
             - Specify the file path if known (infer from context).
-            
+
             For 'terminal_command':
             - Provide the exact shell command.
-            
+
             For 'manual_step':
             - Provide clear instructions.
             """,
@@ -132,7 +132,7 @@ class RemediationAgent:
 
                         response = json.loads(json_match.group(1))
                         return response
-                    except:
+                    except Exception:
                         pass
                 raise parse_error
 
