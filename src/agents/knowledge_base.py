@@ -57,7 +57,7 @@ class IncidentKnowledgeBase:
     def add_incident(self, alert_name: str, diagnosis: str, root_cause: str, fix: str):
         """
         Save a resolved incident to memory.
-        
+
         Args:
             alert_name: The alert that fired (e.g., "HighErrorRate")
             diagnosis: The full diagnosis text
