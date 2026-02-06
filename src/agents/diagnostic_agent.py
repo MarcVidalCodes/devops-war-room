@@ -168,6 +168,22 @@ Be concise but thorough. Focus on actionable insights.""",
             # Parse response
             parsed = self._parse_diagnosis(diagnosis_text)
 
+            # Handle low confidence with no historical data
+            confidence = parsed.get("confidence", "medium")
+            has_similar_incidents = bool(similar_incidents) if "similar_incidents" in locals() else False
+            
+            if confidence == "low" and not has_similar_incidents:
+                self.logger.warning(
+                    f"Low confidence ({confidence}) and no historical data for {alert_info.get('name', 'Unknown')}"
+                )
+                parsed["recommendations"] = [
+                    "Insufficient historical data for confident diagnosis",
+                    "Recommend manual investigation",
+                    "Gather additional metrics before taking action"
+                ]
+                parsed["requires_human_review"] = True
+                parsed["action"] = "escalate"
+
             # Learn from this incident (Save to Memory)
             # Only save if we have a confident diagnosis
             if self.knowledge_base and parsed.get("confidence") == "high":
@@ -194,6 +210,8 @@ Be concise but thorough. Focus on actionable insights.""",
                 "evidence": parsed.get("evidence", "No evidence provided"),
                 "recommendations": parsed.get("recommendations", []),
                 "confidence": parsed.get("confidence", "medium"),
+                "requires_human_review": parsed.get("requires_human_review", False),
+                "action": parsed.get("action", "proceed"),
                 "raw_response": diagnosis_text,
                 "model_used": self.llm.model,
                 "rag_context_used": (

@@ -17,6 +17,12 @@ services:
     command: gunicorn --bind 0.0.0.0:5000 --workers 1 --timeout 120 "src.app.main:create_app()"
     networks:
       - monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
 
   prometheus:
     image: prom/prometheus:latest
@@ -33,6 +39,12 @@ services:
       - '--web.enable-lifecycle'
     networks:
       - monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
 
   grafana:
     image: grafana/grafana:latest
@@ -47,6 +59,49 @@ services:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
     networks:
       - monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+
+  orchestrator:
+    build: .
+    container_name: war-room-orchestrator
+    environment:
+      - PROMETHEUS_URL=http://prometheus:9090
+      - OLLAMA_URL=http://ollama:11434
+      - LOG_LEVEL=INFO
+    command: python -m src.orchestrator
+    depends_on:
+      - prometheus
+      - ollama
+      - ecommerce-api
+    networks:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
 
 networks:
   monitoring:
@@ -55,3 +110,4 @@ networks:
 volumes:
   prometheus_data:
   grafana_data:
+  ollama_data:

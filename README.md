@@ -49,26 +49,47 @@ docker-compose up --build -d
 *   **Prometheus**: http://localhost:9090
 *   **Grafana**: http://localhost:3000 (admin/admin)
 
-### 4. Trigger Chaos & Run Agents
-Open two terminal windows:
+### 4. Start the System
 
-**Terminal 1: Generate Traffic (Trigger Alerts)**
 ```bash
-# Sends traffic to trigger bugs like high error rates and latency
+# Start all services including the orchestrator
+docker-compose up -d
+
+# Wait for services to be ready (30 seconds)
+sleep 30
+
+# Pull Ollama model (first time only)
+docker exec ollama ollama pull llama3
+
+# Generate traffic to trigger alerts
 bash examples/continuous_traffic.sh
 ```
 
-**Terminal 2: Run the AI Agent**
-Wait about 30-60 seconds for alerts to fire, then run the remediation demo:
+In another terminal, follow the orchestrator logs to see the AI agents in action:
+
 ```bash
-# Detects alerts, gathers metrics, diagnoses root cause, and proposes a fix
-python examples/demo_remediation.py
+# Watch the orchestrator process alerts
+docker logs -f war-room-orchestrator
 ```
+
+The orchestrator continuously monitors for alerts and processes each one through the full agent pipeline. It handles deduplication to avoid processing the same alert multiple times.
 
 ## Project Structure
 *   `src/app`: The vulnerable Flask application.
 *   `src/agents`: The Python agents (Monitor, Triage, Diagnostic, Remediation).
+*   `src/orchestrator.py`: Main coordinator that runs all agents in sequence.
 *   `src/integrations`: Clients for Prometheus and other tools.
 *   `monitoring`: Prometheus and Grafana configuration.
-*   `examples`: Demo scripts to run the agents.
+*   `examples`: Scripts for generating traffic and triggering alerts.
 *   `data/lancedb`: Local vector database for RAG memory.
+
+## Resource Limits
+
+All Docker services are configured with memory limits:
+- **ecommerce-api**: 512MB (256MB reserved)
+- **prometheus**: 1GB (512MB reserved)
+- **grafana**: 512MB (256MB reserved)
+- **ollama**: 4GB (2GB reserved) - needs more memory for LLM
+- **orchestrator**: 1GB (512MB reserved)
+
+These limits ensure the system runs efficiently on development machines while preventing any single service from consuming excessive resources.
