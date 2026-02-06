@@ -7,7 +7,7 @@ A simulated production environment with intentional bugs, monitored by an observ
 1.  **Simulates a Broken App**: A Flask e-commerce API (`src/app`) with intentional bugs (memory leaks, database pool exhaustion, race conditions).
 2.  **Monitors Everything**: Prometheus scrapes metrics; Grafana visualizes them.
 3.  **Automated Response**:
-    *   **Monitor Agent**: Detects firing alerts.
+    *   **Orchestrator**: Continuously queries Prometheus for firing alerts and coordinates the agent pipeline.
     *   **Triage Agent**: Investigates alerts by running specific PromQL queries to gather context.
     *   **Diagnostic Agent**: Uses a local Large Language Model (Llama 3 via Ollama) and Retrieval Augmented Generation (RAG) to analyze data, determine root causes, and recommend fixes based on past incidents.
     *   **Remediation Agent**: Generates actionable remediation plans (e.g., scaling commands, code patches) in structured JSON format.
@@ -76,8 +76,8 @@ The orchestrator continuously monitors for alerts and processes each one through
 
 ## Project Structure
 *   `src/app`: The vulnerable Flask application.
-*   `src/agents`: The Python agents (Monitor, Triage, Diagnostic, Remediation).
-*   `src/orchestrator.py`: Main coordinator that runs all agents in sequence.
+*   `src/agents`: The Python agents (Triage, Diagnostic, Remediation).
+*   `src/orchestrator.py`: Main coordinator that queries Prometheus and runs all agents in sequence.
 *   `src/integrations`: Clients for Prometheus and other tools.
 *   `monitoring`: Prometheus and Grafana configuration.
 *   `examples`: Scripts for generating traffic and triggering alerts.

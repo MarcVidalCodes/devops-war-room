@@ -2,13 +2,13 @@
 Orchestrator - Coordinates all agents in the incident response pipeline.
 
 Runs continuously, monitoring for alerts and processing them through
-the full agent pipeline: Monitor -> Triage -> Diagnostic -> Remediation.
+the full agent pipeline: Prometheus -> Triage -> Diagnostic -> Remediation.
 """
 
 import time
 import logging
-from typing import Dict, Any, Set
-from src.agents.monitor_agent import MonitorAgent
+from typing import Dict, Any, Set, List
+from src.integrations.prometheus_client import PrometheusClient
 from src.agents.triage_agent import TriageAgent
 from src.agents.diagnostic_agent import DiagnosticAgent
 from src.agents.remediation_agent import RemediationAgent
@@ -42,12 +42,9 @@ class WarRoomOrchestrator:
         self.check_interval = check_interval
         self.processed_alerts: Set[str] = set()
         
-        # Initialize all agents
+        # Initialize Prometheus client and agents
         logger.info("Initializing agents...")
-        self.monitor = MonitorAgent(
-            prometheus_url=prometheus_url,
-            check_interval=check_interval
-        )
+        self.prom_client = PrometheusClient(prometheus_url)
         self.triage = TriageAgent(prometheus_url=prometheus_url)
         self.diagnostic = DiagnosticAgent(model="llama3", temperature=0.1)
         self.remediation = RemediationAgent(model="llama3", temperature=0.1)
@@ -67,7 +64,7 @@ class WarRoomOrchestrator:
         
         while True:
             try:
-                alerts = self.monitor.get_active_alerts()
+                alerts = self._get_firing_alerts()
                 
                 if alerts:
                     logger.info(f"Found {len(alerts)} active alert(s)")
@@ -100,6 +97,42 @@ class WarRoomOrchestrator:
             except Exception as e:
                 logger.error(f"Error in main loop: {e}", exc_info=True)
                 time.sleep(30)
+
+    def _get_firing_alerts(self) -> List[Dict[str, Any]]:
+        """
+        Query Prometheus directly for firing alerts.
+        
+        Returns:
+            List of firing alerts with their metadata
+        """
+        try:
+            response = self.prom_client.query('ALERTS{alertstate="firing"}')
+            
+            if response.get('status') != 'success':
+                logger.error(f"Failed to query alerts: {response}")
+                return []
+            
+            result = response.get('data', {}).get('result', [])
+            
+            alerts = []
+            for item in result:
+                metric = item.get('metric', {})
+                alert_name = metric.get('alertname', 'Unknown')
+                
+                # Build alert dict in Prometheus alert format
+                alert = {
+                    'labels': metric,
+                    'annotations': metric,  # Simplified - in real Prometheus alerts come with annotations
+                    'startsAt': None,  # Would be in Prometheus alertmanager
+                    'fingerprint': metric.get('alertname', '') + str(hash(str(metric)))
+                }
+                alerts.append(alert)
+            
+            return alerts
+            
+        except Exception as e:
+            logger.error(f"Error querying Prometheus for alerts: {e}")
+            return []
 
     def _get_alert_id(self, alert: Dict[str, Any]) -> str:
         """
